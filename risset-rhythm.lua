@@ -41,6 +41,10 @@ fc_spread = max_fc / 3
 center_fc = 50.0
 double_fc = 25.0
 
+playheads = {0, 0, 0, 0, 0, 0}
+samples = {}
+cutoffs = {}
+
 function init()
     params:add_separator("risset rhythm")
     params:add{
@@ -277,7 +281,13 @@ function init()
         end,
     }
 
+    softcut.buffer_clear()
     softcut.buffer_read_stereo(file, 0, 0, dur)
+    softcut.phase_quant(1,0.025)
+    softcut.event_phase(update_positions)
+    softcut.poll_start_phase()
+    softcut.event_render(on_render)
+    softcut.render_buffer(1, 0, dur, 128)
     for i=1,6 do
         softcut.enable(i, 1)
         softcut.buffer(i, (i-1)//n_vox_per_chan+1)
@@ -304,16 +314,57 @@ function init()
     end
 end
 
-function enc(n, d)
+function update_positions(i, pos)
+    playheads[i] = pos
+    needs_redraw = true
 end
 
-function key(n, d)
+function on_render(ch, start, i, s)
+    samples = s
+    needs_redraw = true
 end
 
 function refresh()
+    redraw()
+end
+
+function redraw()
     if not needs_redraw then return end
     needs_redraw = false
     screen.clear()
+
+    screen.level(3)
+    local x_pos = 0
+    for i,s in ipairs(samples) do
+        local height = util.round(math.abs(s) * 25)
+        screen.move(util.linlin(0,128,10,120,x_pos), 35 - height)
+        screen.line_rel(0, 2 * height)
+        screen.stroke()
+        x_pos = x_pos + 1
+    end
+
+    screen.level(15)
+    for i=1,3 do
+        local p=scrub_pos[i]
+        screen.move(util.linlin(0, dur, 10, 120, p), 0)
+        screen.line_rel(0, 64)
+        screen.stroke()
+    end
+
+    screen.level(8)
+    for i=1,3 do
+        local p=playheads[i]
+        screen.move(util.linlin(0, dur, 10, 120, p), 0)
+        screen.line_rel(0, 64)
+        screen.stroke()
+    end
+
+    screen.level(12)
+    for _, cutoff in ipairs(cutoffs) do
+        screen.move(0, util.linlin(0, 100, 64, 0, cutoff))
+        screen.line_rel(128, 0)
+        screen.stroke()
+    end
 
     screen.update()
 end
@@ -404,6 +455,7 @@ function scrub_loop(index)
             pos = pos + pos_step
             pos = wrap_val(pos, 0, dur-loop_size)
             scrub_pos[index] = pos
+            needs_redraw = true
 
             local scrubs = gen_values(min_scrub, max_scrub, n_vox_per_chan, scrub_spread, curr_scrub)
             local scrub = scrubs[index]
@@ -415,7 +467,7 @@ end
 
 
 function update_filters()
-    local cutoffs = gen_values(min_fc, max_fc, n_vox_per_chan, fc_spread, curr_fc)
+    cutoffs = gen_values(min_fc, max_fc, n_vox_per_chan, fc_spread, curr_fc)
 
     for b = 1, 2 do
         for i, cutoff in ipairs(cutoffs) do
