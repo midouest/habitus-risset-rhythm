@@ -1,10 +1,7 @@
 -- softcut-based risset rhythm
 needs_redraw = true
--- file = "/home/we/dust/audio/habitus/habitus-park-normalized.wav"
--- file = "/home/we/dust/audio/habitus/habitus-pizza-cutter-4.wav"
--- file = "/home/we/dust/audio/habitus/habitus-cutting.wav"
+
 file = "/home/we/dust/audio/tehn/drumev.wav"
--- file = "/home/we/dust/audio/tehn/whirl2.aif"
 
 n_channels, n_samples, sample_rate = audio.file_info(file)
 dur = n_samples / sample_rate
