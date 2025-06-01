@@ -1,4 +1,15 @@
--- softcut-based risset rhythm
+-- granular risset rhythms
+--
+-- featuring three barber poles
+-- - grain playback rate
+-- - grain scrub rate
+-- - filter cutoff
+--
+-- play using the params menu
+--
+-- developed during the 2025
+-- norns / habitus LA workshop
+--
 needs_redraw = true
 
 file = "/home/we/dust/audio/tehn/drumev.wav"
